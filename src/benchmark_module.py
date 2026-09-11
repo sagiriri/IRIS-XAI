@@ -44,7 +44,7 @@ import torch.nn.functional as F
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 
 from model_module import evaluate_model, get_model_size_mb
-from xai_module import explain_gradcam, explain_shap, explain_lime
+from xai_module import explain_gradcam, explain_shap, explain_lime, explain_intgrad, explain_iriscam
 from fidelity_module import paper_style_deletion_auc
 
 
@@ -318,6 +318,8 @@ def compute_explanation_metrics(model, image_tensor, target_class, explain_fn, d
 # ---------------------------------------------------------------------
 XAI_METHODS = {
     "gradcam": explain_gradcam,
+    "intgrad": explain_intgrad,
+    "iriscam": explain_iriscam,
     # SHAP at full 224x224 resolution is what caused the earlier hang —
     # gradient sampling across every pixel of a full-res image, repeated
     # per background sample, is exactly the expensive case that triggered
@@ -562,7 +564,7 @@ if __name__ == "__main__":
                               "SHAP is the slow one — keep this modest for a same-day run, "
                               "raise it later for final report numbers.")
     parser.add_argument("--xai_methods", nargs="+", default=["gradcam", "shap", "lime"],
-                         choices=["gradcam", "shap", "lime"],
+                         choices=["gradcam", "intgrad", "iriscam", "shap", "lime"],
                          help="which XAI methods to run. SHAP's GradientExplainer has been "
                               "unreliable on some torch/CUDA combinations (can hang "
                               "indefinitely with no error). If it hangs, rerun with "

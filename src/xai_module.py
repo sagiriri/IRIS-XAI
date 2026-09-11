@@ -261,6 +261,78 @@ def explain_lime(model, image_tensor, target_class: int, device: str = "cpu",
 # Quick manual test — run this file directly to sanity-check all three methods
 # ---------------------------------------------------------------------------
 
+
+
+# ---------------------------------------------------------------------------
+# 4. Integrated Gradients (IntGrad) via Captum
+# ---------------------------------------------------------------------------
+
+def explain_intgrad(model, image_tensor, target_class: int, device: str = "cpu",
+                    n_steps: int = 50) -> np.ndarray:
+    """
+    Uses captum.attr.IntegratedGradients to compute path integrals from a
+    neutral black baseline to the input image across n_steps.
+    Matches the baseline protocol in Skliarov et al. (2025).
+
+    Args:
+        model: trained model (eval mode is set internally)
+        image_tensor: single image, shape (1, 3, H, W)
+        target_class: class index to explain
+        n_steps: number of Riemann approximation steps (default: 50)
+
+    Returns:
+        (H, W) numpy array, normalized to [0, 1].
+    """
+    from captum.attr import IntegratedGradients
+
+    model.eval()
+    device = _model_device(model)
+    image_tensor = image_tensor.to(device)
+
+    ig = IntegratedGradients(model)
+    baseline = torch.zeros_like(image_tensor)
+
+    attributions = ig.attribute(image_tensor, baselines=baseline, target=target_class, n_steps=n_steps)
+    per_pixel = np.abs(attributions.squeeze(0).cpu().detach().numpy()).sum(axis=0)
+    return _normalize_map(per_pixel)
+
+
+# ---------------------------------------------------------------------------
+# 5. IRIS-CAM: Adaptive Energy-Gated Class Activation Mapping
+# ---------------------------------------------------------------------------
+
+def explain_iriscam(model, image_tensor, target_class: int, device: str = "cpu",
+                    percentile: float = 70.0, temperature: float = 0.08) -> np.ndarray:
+    """
+    IRIS-CAM: Novel Adaptive Energy-Gated Explainer proposed in IRIS-XAI.
+
+    Standard Grad-CAM maps produce coarse, diffuse halos around target objects
+    due to bilinear upsampling of low-resolution feature maps (e.g. 7x7), causing
+    substantial clutter leakage on background distractors. IRIS-CAM dynamically
+    identifies the salient feature core via energy-percentile gating:
+        tau = percentile(M_cam[M_cam > 0.05], percentile)
+        Gate = 1 / (1 + exp(-(M_cam - tau) / temperature))
+        M_iris = M_cam * Gate
+
+    This suppresses low-confidence background leakage while preserving fine-grained
+    anatomical part activations.
+
+    Returns:
+        (H, W) numpy array, normalized to [0, 1].
+    """
+    cam_map = explain_gradcam(model, image_tensor, target_class, device=device)
+
+    active_vals = cam_map[cam_map > 0.05]
+    if len(active_vals) == 0:
+        return cam_map
+
+    tau = float(np.percentile(active_vals, percentile))
+    gate = 1.0 / (1.0 + np.exp(-(cam_map - tau) / (temperature + 1e-8)))
+    iriscam_map = cam_map * gate
+
+    return _normalize_map(iriscam_map)
+
+
 if __name__ == "__main__":
     import sys
     sys.path.append(".")
