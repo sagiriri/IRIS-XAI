@@ -301,36 +301,34 @@ def explain_intgrad(model, image_tensor, target_class: int, device: str = "cpu",
 # 5. IRIS-CAM: Adaptive Energy-Gated Class Activation Mapping
 # ---------------------------------------------------------------------------
 
-def explain_iriscam(model, image_tensor, target_class: int, device: str = "cpu",
-                    percentile: float = 70.0, temperature: float = 0.08) -> np.ndarray:
+def explain_eg_gradcam(model, image_tensor, target_class: int, device: str = "cpu",
+                       percentile: float = 70.0, temperature: float = 0.08) -> np.ndarray:
     """
-    IRIS-CAM: Novel Adaptive Energy-Gated Explainer proposed in IRIS-XAI.
-
+    Energy-Gated Grad-CAM (EG-GradCAM) [Ablation Study]:
+    
     Standard Grad-CAM maps produce coarse, diffuse halos around target objects
     due to bilinear upsampling of low-resolution feature maps (e.g. 7x7), causing
-    substantial clutter leakage on background distractors. IRIS-CAM dynamically
-    identifies the salient feature core via energy-percentile gating:
+    background clutter leakage. EG-GradCAM dynamically identifies the salient
+    feature core via energy-percentile gating:
         tau = percentile(M_cam[M_cam > 0.05], percentile)
         Gate = 1 / (1 + exp(-(M_cam - tau) / temperature))
-        M_iris = M_cam * Gate
+        M_eg = M_cam * Gate
 
-    This suppresses low-confidence background leakage while preserving fine-grained
-    anatomical part activations.
-
-    Returns:
-        (H, W) numpy array, normalized to [0, 1].
+    This suppresses low-confidence background leakage while preserving anatomical
+    part activations.
     """
     cam_map = explain_gradcam(model, image_tensor, target_class, device=device)
-
     active_vals = cam_map[cam_map > 0.05]
     if len(active_vals) == 0:
         return cam_map
 
     tau = float(np.percentile(active_vals, percentile))
     gate = 1.0 / (1.0 + np.exp(-(cam_map - tau) / (temperature + 1e-8)))
-    iriscam_map = cam_map * gate
+    eg_map = cam_map * gate
+    return _normalize_map(eg_map)
 
-    return _normalize_map(iriscam_map)
+# Alias for backwards compatibility
+explain_iriscam = explain_eg_gradcam
 
 
 if __name__ == "__main__":

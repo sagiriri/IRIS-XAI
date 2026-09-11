@@ -17,34 +17,34 @@ Auto-generated from the master benchmark CSV. No experiments were rerun.
 
 ## Explainability Score Matrix (0-100)
 
-| dataset    | model        |   gradcam |   intgrad |   iriscam |   lime |   shap |
-|:-----------|:-------------|----------:|----------:|----------:|-------:|-------:|
-| CIFAR10    | efficientnet |      57.7 |      43.9 |      61.6 |   47.9 |   45   |
-| CIFAR10    | resnet18     |      67.5 |      54.6 |      74   |   49.6 |   53.4 |
-| CIFAR10    | resnet50     |      49.7 |      45.7 |      51.3 |   48.3 |   52.7 |
-| CIFAR10    | simplecnn    |      67   |      50.3 |      72   |   47.8 |   55.8 |
-| FUNNYBIRDS | efficientnet |      63.9 |      71   |      68.8 |   50.8 |   52.6 |
-| FUNNYBIRDS | resnet18     |      72   |      70.6 |      75.7 |   45.2 |   67.4 |
-| FUNNYBIRDS | simplecnn    |      84.2 |      57   |      90.9 |   56.3 |   78.4 |
+| dataset    | model        |   eg_gradcam |   gradcam |   intgrad |   lime |   shap |
+|:-----------|:-------------|-------------:|----------:|----------:|-------:|-------:|
+| CIFAR10    | efficientnet |         61.6 |      57.7 |      43.9 |   47.9 |   45   |
+| CIFAR10    | resnet18     |         74   |      67.5 |      54.6 |   49.6 |   53.4 |
+| CIFAR10    | resnet50     |         51.3 |      49.7 |      45.7 |   48.3 |   52.7 |
+| CIFAR10    | simplecnn    |         72   |      67   |      50.3 |   47.8 |   55.8 |
+| FUNNYBIRDS | efficientnet |         68.8 |      63.9 |      71   |   50.8 |   52.6 |
+| FUNNYBIRDS | resnet18     |         75.7 |      72   |      70.6 |   45.2 |   67.4 |
+| FUNNYBIRDS | simplecnn    |         90.9 |      84.2 |      57   |   56.3 |   78.4 |
 
 
 ## FunnyBirds Ground-Truth Comparison
 
 | model        | xai_method   |   part_overlap_ratio |   clutter_leakage_ratio |   explanation_runtime_sec |
 |:-------------|:-------------|---------------------:|------------------------:|--------------------------:|
+| efficientnet | eg_gradcam   |            0.0871125 |               0.0488797 |                 0.0312614 |
 | efficientnet | gradcam      |            0.087087  |               0.048894  |                 0.054426  |
 | efficientnet | intgrad      |            0.100734  |               0.235466  |                 0.61418   |
-| efficientnet | iriscam      |            0.0871125 |               0.0488797 |                 0.0312614 |
 | efficientnet | lime         |            0.056517  |               0.077366  |                 0.907069  |
 | efficientnet | shap         |            0.059693  |               0.203989  |                14.1223    |
+| resnet18     | eg_gradcam   |            0.0787404 |               0.0612167 |                 0.0266803 |
 | resnet18     | gradcam      |            0.078762  |               0.061251  |                 0.027239  |
 | resnet18     | intgrad      |            0.103358  |               0.236666  |                 0.683185  |
-| resnet18     | iriscam      |            0.0787404 |               0.0612167 |                 0.0266803 |
 | resnet18     | lime         |            0.014466  |               0.07599   |                 0.913121  |
 | resnet18     | shap         |            0.086263  |               0.259791  |                 9.47061   |
+| simplecnn    | eg_gradcam   |            0.0891572 |               0.0722388 |                 0.0125472 |
 | simplecnn    | gradcam      |            0.097656  |               0.091957  |                 0.155629  |
 | simplecnn    | intgrad      |            0.106734  |               0.141498  |                 0.156486  |
-| simplecnn    | iriscam      |            0.0891572 |               0.0722388 |                 0.0125472 |
 | simplecnn    | lime         |            0.031214  |               0.069289  |                 0.886403  |
 | simplecnn    | shap         |            0.107717  |               0.178773  |                 6.93345   |
 
@@ -53,7 +53,7 @@ Auto-generated from the master benchmark CSV. No experiments were rerun.
 
 | xai_method   |   avg_explainability_score |   avg_runtime_sec |   avg_part_overlap_ratio |   avg_clutter_leakage_ratio |   rank_by_score |
 |:-------------|---------------------------:|------------------:|-------------------------:|----------------------------:|----------------:|
-| iriscam      |                    70.605  |         0.0409853 |                0.0850033 |                   0.0607784 |               1 |
+| eg_gradcam   |                    70.605  |         0.0409853 |                0.0850033 |                   0.0607784 |               1 |
 | gradcam      |                    66.0058 |         0.0639035 |                0.087835  |                   0.0673673 |               2 |
 | shap         |                    57.8924 |         7.55681   |                0.0845577 |                   0.214184  |               3 |
 | intgrad      |                    56.1659 |         0.592235  |                0.103609  |                   0.204543  |               4 |

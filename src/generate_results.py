@@ -46,7 +46,7 @@ REQUIRED_COLS = [
     "part_overlap_ratio", "clutter_leakage_ratio",
 ]
 
-XAI_ORDER = ["gradcam", "iriscam", "intgrad", "shap", "lime"]
+XAI_ORDER = ["gradcam", "eg_gradcam", "intgrad", "shap", "lime"]
 
 
 def load_master_csv(path: Path) -> pd.DataFrame:

@@ -1,8 +1,8 @@
-dataset,model,gradcam,intgrad,iriscam,lime,shap
-CIFAR10,efficientnet,57.7,43.9,61.6,47.9,45.0
-CIFAR10,resnet18,67.5,54.6,74.0,49.6,53.4
-CIFAR10,resnet50,49.7,45.7,51.3,48.3,52.7
-CIFAR10,simplecnn,67.0,50.3,72.0,47.8,55.8
-FUNNYBIRDS,efficientnet,63.9,71.0,68.8,50.8,52.6
-FUNNYBIRDS,resnet18,72.0,70.6,75.7,45.2,67.4
-FUNNYBIRDS,simplecnn,84.2,57.0,90.9,56.3,78.4
+dataset,model,eg_gradcam,gradcam,intgrad,lime,shap
+CIFAR10,efficientnet,61.6,57.7,43.9,47.9,45.0
+CIFAR10,resnet18,74.0,67.5,54.6,49.6,53.4
+CIFAR10,resnet50,51.3,49.7,45.7,48.3,52.7
+CIFAR10,simplecnn,72.0,67.0,50.3,47.8,55.8
+FUNNYBIRDS,efficientnet,68.8,63.9,71.0,50.8,52.6
+FUNNYBIRDS,resnet18,75.7,72.0,70.6,45.2,67.4
+FUNNYBIRDS,simplecnn,90.9,84.2,57.0,56.3,78.4

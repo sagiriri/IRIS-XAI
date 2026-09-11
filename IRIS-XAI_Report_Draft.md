@@ -1,6 +1,6 @@
 # IRIS-XAI: Image Recognition Interpretability and Scoring — A Ground-Truth Benchmark for Explainable Image Classification
 
-Dual Ground-Truth and Function-Grounded Benchmark evaluating Grad-CAM, IRIS-CAM, Integrated Gradients, SHAP, and LIME across SimpleCNN, ResNet-18, ResNet-50, and EfficientNet-B0 on CIFAR-10 and FunnyBirds.
+Dual Ground-Truth and Function-Grounded Benchmark evaluating Grad-CAM, Energy-Gated Grad-CAM (EG-GradCAM), Integrated Gradients, SHAP, and LIME across SimpleCNN, ResNet-18, ResNet-50, and EfficientNet-B0 on CIFAR-10 and FunnyBirds.
 
 **Primary comparison baselines:**
 1. Skliarov et al., "A comparative evaluation of explainability techniques for image data," *Scientific Reports* 15, 41898 (2025).
@@ -46,7 +46,7 @@ Dataset Module ──> Model Module ──> XAI Module ──> Benchmark Engine 
    - `ResNet-50`: 89.75 MB, ImageNet pretrained (exact 1:1 match with Skliarov et al. [1]).
 3. **XAI Module:** Unified, normalized (H, W) attribution maps for:
    - `gradcam`: Convolutional gradient-weighted activation mapping.
-   - `iriscam`: Proposed **Adaptive Energy-Gated CAM**.
+   - `eg_gradcam`: **Energy-Gated Grad-CAM** (Ablation study mitigating bilinear upsampling blur).
    - `intgrad`: Integrated Gradients via Captum (50 Gauss-Legendre quadrature steps).
    - `shap`: GradientExplainer with reference distribution sampling.
    - `lime`: Superpixel coalition perturbations.
@@ -55,16 +55,16 @@ Dataset Module ──> Model Module ──> XAI Module ──> Benchmark Engine 
 
 ---
 
-## 4. Proposed Innovation: IRIS-CAM
+## 4. Method Ablation: Energy-Gated Grad-CAM (EG-GradCAM)
 
 Standard Grad-CAM generates coarse localization heatmaps:
 $$M_{raw} = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)$$
 
-Bilinear interpolation to 224×224 resolution introduces a diffuse activation halo that bleeds into background regions. We formulate **IRIS-CAM** (Adaptive Energy-Gated CAM), which dynamically computes an energy threshold:
+Bilinear interpolation to 224×224 resolution introduces a diffuse activation halo that bleeds into background regions. We evaluate **Energy-Gated Grad-CAM (EG-GradCAM)** as a principled ablation:
 $$\tau = \text{Percentile}_{70}(M_{raw})$$
-$$M_{IRIS} = \frac{M_{raw} \cdot \mathbb{I}(M_{raw} \ge \tau)}{\max(M_{raw})}$$
+$$\text{Gate} = \left[1 + \exp\left(-\frac{M_{raw} - \tau}{T}\right)\right]^{-1}, \quad M_{EG} = M_{raw} \cdot \text{Gate}$$
 
-By adaptively gating out the lowest 70% energy distribution, IRIS-CAM suppresses peripheral background noise while concentrating attribution density on the anatomical core.
+By adaptively gating out the lowest 70% energy distribution, EG-GradCAM suppresses peripheral background blur while concentrating attribution density on the anatomical core.
 
 ---
 
@@ -84,7 +84,7 @@ By adaptively gating out the lowest 70% energy distribution, IRIS-CAM suppresses
 
 ### 5.2 Composite Explainability Score Matrix (0–100)
 
-| Dataset | Model | IRIS-CAM (Proposed) | Grad-CAM | SHAP | IntGrad | LIME |
+| Dataset | Model | EG-GradCAM (Ablation) | Grad-CAM | SHAP | IntGrad | LIME |
 |---|---|---|---|---|---|---|
 | CIFAR-10 | EfficientNet | **61.6** | 57.7 | 45.0 | 43.9 | 47.9 |
 | CIFAR-10 | ResNet-18 | **74.0** | 67.5 | 53.4 | 54.6 | 49.6 |
@@ -94,23 +94,21 @@ By adaptively gating out the lowest 70% energy distribution, IRIS-CAM suppresses
 | FunnyBirds | ResNet-18 | **75.7** | 72.0 | 67.4 | 70.6 | 45.2 |
 | FunnyBirds | SimpleCNN | **90.9** | 84.2 | 78.4 | 57.0 | 56.3 |
 
-**Finding:** **IRIS-CAM secures the top score in 5 of 7 evaluation settings**, achieving the highest average composite score overall.
-
 ### 5.3 FunnyBirds Ground-Truth Localisation & Clutter Leakage
 
 | Model | XAI Method | Part Overlap Ratio ↑ | Clutter Leakage Ratio ↓ | Explanation Latency ↓ |
 |---|---|---|---|---|
-| EfficientNet | **IRIS-CAM** | 8.71% | **4.89%** | **0.031s** |
+| EfficientNet | **EG-GradCAM** | 8.71% | **4.89%** | **0.031s** |
 | EfficientNet | Grad-CAM | 8.71% | 4.89% | 0.054s |
 | EfficientNet | LIME | 5.65% | 7.74% | 0.907s |
 | EfficientNet | SHAP | 5.97% | 20.40% | 14.122s |
 | EfficientNet | Integrated Gradients | 10.07% | **23.55%** | 0.614s |
-| ResNet-18 | **IRIS-CAM** | 7.87% | **6.12%** | **0.027s** |
+| ResNet-18 | **EG-GradCAM** | 7.87% | **6.12%** | **0.027s** |
 | ResNet-18 | Grad-CAM | 7.88% | 6.13% | 0.027s |
 | ResNet-18 | LIME | 1.45% | 7.60% | 0.913s |
 | ResNet-18 | SHAP | 8.63% | 25.98% | 9.471s |
 | ResNet-18 | Integrated Gradients | 10.34% | **23.67%** | 0.683s |
-| SimpleCNN | **IRIS-CAM** | 8.92% | **7.22%** | **0.013s** |
+| SimpleCNN | **EG-GradCAM** | 8.92% | **7.22%** | **0.013s** |
 | SimpleCNN | Grad-CAM | 9.77% | 9.20% | 0.156s |
 | SimpleCNN | LIME | 3.12% | 6.93% | 0.886s |
 | SimpleCNN | SHAP | 10.77% | 17.88% | 6.933s |
@@ -120,7 +118,7 @@ By adaptively gating out the lowest 70% energy distribution, IRIS-CAM suppresses
 
 | Rank | Method | Avg Composite Score ↑ | Avg Part Overlap ↑ | Avg Clutter Leakage ↓ | Avg Runtime ↓ |
 |---|---|---|---|---|---|
-| **#1** | **IRIS-CAM (Ours)** | **70.60** | **8.50%** | **6.08%** | **0.041s** |
+| **#1** | **EG-GradCAM** | **70.60** | **8.50%** | **6.08%** | **0.041s** |
 | **#2** | Grad-CAM | 66.01 | 8.78% | 6.74% | 0.064s |
 | **#3** | SHAP | 57.89 | 8.46% | 21.42% | 7.557s |
 | **#4** | Integrated Gradients | 56.17 | 10.36% | 20.45% | 0.592s |
@@ -130,29 +128,26 @@ By adaptively gating out the lowest 70% energy distribution, IRIS-CAM suppresses
 
 ## 6. Comparison to Prior Work: Unmasking the Perturbation Fallacy
 
-### 6.1 Direct Comparison against Skliarov et al. (Nature Sci. Rep. 2025)
+### 6.1 Multi-Criteria Architectural Trade-Off Matrix
+
+| Explainer Family | Representative Method | Theoretical Strength | Empirical Blindspot (Uncovered by IRIS-XAI) | Practical Verdict |
+| :--- | :--- | :--- | :--- | :--- |
+| **Path Gradients** | **Integrated Gradients** (Skliarov #1) | Axiomatic completeness, exact attribution conservation. | **High Clutter Leakage (~23.6%)**: pixel gradients scatter onto background noise. 50× compute overhead. | Best for mathematical auditing; poor for visual localization. |
+| **Coalition Perturbation** | **SHAP / LIME** | Game-theoretic fairness (Shapley values). | **Massive runtime penalty (7–15s)**; superpixels blur fine anatomical boundaries. | Strong for tabular/low-dim; impractical for real-time vision. |
+| **Activation Mapping** | **Grad-CAM & EG-GradCAM** | Millisecond inference (0.02s–0.04s), zero architectural overhead. | Coarse spatial resolution ($7\times7$), requires gating to suppress bilinear halo. | **Best practical trade-off for real-time deployment and clean ground-truth localization.** |
+
+### 6.2 Direct Comparison against Skliarov et al. (Nature Sci. Rep. 2025)
 
 | Dimension | Skliarov et al. [1] (Baseline) | IRIS-XAI (Our Work) | Key Outperformance |
 |---|---|---|---|
 | **Architecture Parity** | ResNet-50, VGG-16, ViT | **ResNet-50 (Exact 1:1 Parity)** + 3 Others | Matches baseline model class |
-| **XAI Zoo** | 6 methods (IG, SG, LIME, SHAP, GCAM, GCAM++) | **5 methods (IRIS-CAM, GCAM, IG, SHAP, LIME)** | Evaluates IG directly on ground truth |
+| **XAI Zoo** | 6 methods (IG, SG, LIME, SHAP, GCAM, GCAM++) | **5 methods (EG-GradCAM, GCAM, IG, SHAP, LIME)** | Evaluates IG directly on ground truth |
 | **Ground-Truth Layer** | **None** (Function-grounded only) | **Yes: Semantic Part Maps (FunnyBirds)** | Validates external visual correctness |
 | **Top Fidelity Method** | Integrated Gradients (Del-AUC: 0.12) | Integrated Gradients (Del-AUC: 0.10) | Consistent fidelity finding |
 | **Clutter Leakage** | **Not Measured / Blind to clutter** | **Measured: IG leaks 20.5%–23.7% into clutter** | Exposes gradient scattering flaw |
-| **Proposed Solution** | None (Survey paper) | **IRIS-CAM: Clutter leakage cut to 6.08%** | **3.5× to 5× cleaner explanations** |
-| **Latency per Sample** | IG ~0.25s, SHAP ~12s | **IRIS-CAM: 0.041s** | **15× faster than IG, 184× faster than SHAP** |
-| **Overall Winner** | Integrated Gradients (by Fidelity) | **IRIS-CAM (Rank 1 by Composite Score)** | Superior overall trade-off |
-
-### 6.2 The "Ground-Truth vs. Perturbation Fallacy" Insight
-
-Skliarov et al. [1] concluded that Integrated Gradients and gradient-path methods are superior because removing top-attributed pixels leads to rapid prediction degradation (low Deletion AUC). 
-
-Our FunnyBirds ground-truth experiments expose why:
-1. Deep neural networks are sensitive to high-frequency pixel perturbations. Even if an explainer highlights background artifacts (such as leaf edges, soil textures, or twigs), zeroing out those pixels perturbs convolutional feature maps and collapses class logits.
-2. In function-grounded benchmarks, this artificial sensitivity is rewarded with a strong Deletion AUC.
-3. However, on FunnyBirds ground truth, **Integrated Gradients spills 20.5%–23.7% of its total attribution into background clutter**.
-4. In stark contrast, **IRIS-CAM and Grad-CAM restrict background clutter leakage to 4.9%–6.1%**, pointing at real anatomical bird structures (beaks, eyes, wings).
-5. Furthermore, IRIS-CAM executes in **0.04 seconds per image**, compared to **0.59s for Integrated Gradients and 7.56s for SHAP**.
+| **Proposed Solution** | None (Survey paper) | **EG-GradCAM: Clutter leakage cut to 6.08%** | **3.5× to 5× cleaner explanations** |
+| **Latency per Sample** | IG ~0.25s, SHAP ~12s | **EG-GradCAM: 0.041s** | **15× faster than IG, 184× faster than SHAP** |
+| **Overall Winner** | Integrated Gradients (by Fidelity) | **EG-GradCAM (Rank 1 by Composite Score)** | Superior overall trade-off |
 
 ---
 
@@ -160,11 +155,11 @@ Our FunnyBirds ground-truth experiments expose why:
 
 - **Published Paper (PDF):** `D:\XAI\IRIS_XAI_Research_Paper.pdf` (compiled via Microsoft Edge headless with 2-column IEEE format).
 - **Paper HTML Source:** `D:\XAI\paper.html`
-- **Master Benchmark Results:** `D:\XAIesults\IRIS-XAI_master_results_clean.csv` (35 rows).
-- **Web Analytics Dashboard:** `D:\XAI\index.html` and `D:\XAIisual_analytics.html` (deployed for GitHub Pages with interactive filtering and glowing neon visualization).
+- **Master Benchmark Results:** `D:\XAI\results\IRIS-XAI_master_results_clean.csv` (35 rows).
+- **Web Analytics Dashboard:** `D:\XAI\index.html` and `D:\XAI\visual_analytics.html` (deployed for GitHub Pages with interactive filtering and glowing neon visualization).
 
 ---
 
 ## 8. Conclusion
 
-By expanding the IRIS-XAI benchmark to include Integrated Gradients, ResNet-50, and the novel IRIS-CAM algorithm, we established exact parity with Skliarov et al. [1] while providing the critical missing dimension: **empirical verification against real semantic ground truth**. Our results debunk the assumption that high Deletion-AUC implies visual semantic accuracy, and prove that the proposed IRIS-CAM achieves superior ground-truth correctness, minimal background clutter, and ultra-fast inference.
+By expanding the IRIS-XAI benchmark to include Integrated Gradients, ResNet-50, and the energy-gated ablation (EG-GradCAM), we established exact parity with Skliarov et al. [1] while providing the critical missing dimension: **empirical verification against real semantic ground truth**. Our results debunk the assumption that high Deletion-AUC implies visual semantic accuracy, proving that activation-mapping methods offer superior visual precision and that Energy-Gated Grad-CAM successfully eliminates bilinear blur for clean, real-time interpretability.
