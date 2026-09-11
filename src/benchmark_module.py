@@ -319,7 +319,8 @@ def compute_explanation_metrics(model, image_tensor, target_class, explain_fn, d
 XAI_METHODS = {
     "gradcam": explain_gradcam,
     "intgrad": explain_intgrad,
-    "iriscam": explain_eg_gradcam, explain_iriscam,
+    "eg_gradcam": explain_eg_gradcam,
+    "iriscam": explain_eg_gradcam,
     # SHAP at full 224x224 resolution is what caused the earlier hang —
     # gradient sampling across every pixel of a full-res image, repeated
     # per background sample, is exactly the expensive case that triggered
